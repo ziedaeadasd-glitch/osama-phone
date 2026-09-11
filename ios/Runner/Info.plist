@@ -44,6 +44,7 @@
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>يحتاج التطبيق للوصول إلى معرض الصور لاختيار صور المنتجات والأجهزة المبرمجة لرفعها للمتجر.</string>
 	<key>NSCameraUsageDescription</key>

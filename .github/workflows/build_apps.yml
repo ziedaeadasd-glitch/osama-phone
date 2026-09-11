@@ -81,6 +81,7 @@ jobs:
   # 3. نشر ملفات الـ APK والـ IPA في صفحة Releases للتحميل المباشر
   release:
     needs: [build-android, build-ios]
+    if: always() && (needs.build-android.result == 'success' || needs.build-ios.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: 📥 استنساخ الكود
@@ -88,11 +89,13 @@ jobs:
 
       - name: 📥 تنزيل ملف الـ APK من الخطوة السابقة
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: Osama_Phone_Android_APK
 
       - name: 📥 تنزيل ملف الـ IPA من الخطوة السابقة
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: Osama_Phone_iOS_IPA
 
