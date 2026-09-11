@@ -11,8 +11,8 @@ import '../models/app_models.dart';
 /// =========================================================================
 
 class ApiService {
-  // الآيبي الافتراضي للتطبيق متصلاً بسيرفر الحاسوب
-  static String defaultBaseUrl = 'http://192.168.1.184:3000';
+  // رابط السيرفر السحابي العالمي الدائم لجميع الهواتف والزبائن
+  static String defaultBaseUrl = 'https://osama-phone-api.onrender.com';
 
   static const String _prefServerKey = 'custom_server_url';
   static const String _prefTokenKey = 'admin_token';
