@@ -1,0 +1,115 @@
+name: Build iOS IPA and Android APK (Osama Phone)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+  packages: write
+  actions: write
+
+jobs:
+  # 1. بناء تطبيق الأندرويد APK
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 استنساخ كود المشروع
+        uses: actions/checkout@v4
+
+      - name: ☕ تثبيت بيئة جافا JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 🚀 تثبيت فلاتر
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 تنزيل حزم فلاتر
+        run: flutter pub get
+
+      - name: 🔨 بناء ملف APK (Release)
+        run: flutter build apk --release
+
+      - name: 📦 إعادة تسمية ونقل الـ APK
+        run: cp build/app/outputs/flutter-apk/app-release.apk osama_phone.apk
+
+      - name: 🚀 رفع ملف الـ APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Osama_Phone_Android_APK
+          path: osama_phone.apk
+
+  # 2. بناء تطبيق الآيفون IPA
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - name: 📥 استنساخ كود المشروع
+        uses: actions/checkout@v4
+
+      - name: 🚀 تثبيت فلاتر
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 تنزيل حزم فلاتر
+        run: flutter pub get
+
+      - name: 🔨 تجميع وبناء ملف iOS
+        run: flutter build ios --release --no-codesign
+
+      - name: 📦 إنشاء وحزم ملف الـ IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r osama_phone.ipa Payload
+
+      - name: 🚀 رفع ملف الـ IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Osama_Phone_iOS_IPA
+          path: osama_phone.ipa
+
+  # 3. نشر ملفات الـ APK والـ IPA في صفحة Releases للتحميل المباشر
+  release:
+    needs: [build-android, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 استنساخ الكود
+        uses: actions/checkout@v4
+
+      - name: 📥 تنزيل ملف الـ APK من الخطوة السابقة
+        uses: actions/download-artifact@v4
+        with:
+          name: Osama_Phone_Android_APK
+
+      - name: 📥 تنزيل ملف الـ IPA من الخطوة السابقة
+        uses: actions/download-artifact@v4
+        with:
+          name: Osama_Phone_iOS_IPA
+
+      - name: 🌐 إنشاء إصدار Release وتوفير روابط التحميل المباشرة
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Osama Phone v1.0.${{ github.run_number }}"
+          draft: false
+          prerelease: false
+          body: |
+            🎉 **روابط تحميل تطبيق أسامة فون (Osama Phone):**
+            
+            - 🤖 **نظام أندرويد:** حمّل ملف `osama_phone.apk` وثبّته مباشرة على هاتفك.
+            - 🍎 **نظام آيفون (iOS):** حمّل ملف `osama_phone.ipa` وثبّته عبر Sideloadly أو AltStore.
+          files: |
+            osama_phone.apk
+            osama_phone.ipa
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
