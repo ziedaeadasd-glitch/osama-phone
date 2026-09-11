@@ -1,7 +1,7 @@
 name: Build and Release iOS IPA (Osama Phone)
 
 on:
-  workflow_dispatch: # تشغيل يدوي بنقرة زر
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -9,51 +9,58 @@ on:
 
 permissions:
   contents: write
+  packages: write
+  actions: write
 
 jobs:
   build-and-release:
-    runs-on: macos-14 # سيرفر أبل ماك سحابي من GitHub
+    runs-on: macos-14
 
     steps:
       - name: 📥 استنساخ كود المشروع
         uses: actions/checkout@v4
 
-      - name: ☕ تثبيت بيئة فلاتر
+      - name: ☕ تثبيت فلاتر
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.27.x'
           channel: 'stable'
           cache: true
 
-      - name: 📦 تنزيل حزم ومكتبات المشروع
-        run: flutter pub get
+      - name: 📦 تنزيل حزم فلاتر وتجهيز CocoaPods
+        run: |
+          flutter pub get
+          cd ios
+          pod install --repo-update || true
+          cd ..
 
-      - name: 🔨 بناء تطبيق iOS
+      - name: 🔨 تجميع وبناء ملف تطبيق iOS
         run: |
           flutter build ios --release --no-codesign
 
-      - name: 📦 تجميع وحزم ملف الـ IPA
+      - name: 📦 إنشاء وتجهيز ملف الـ IPA
         run: |
           mkdir -p Payload
           cp -r build/ios/iphoneos/Runner.app Payload/
           zip -r osama_phone.ipa Payload
 
-      - name: 🚀 رفع ملف الـ IPA كـ Artifact في تبويب Actions
+      - name: 🚀 رفع ملف الـ IPA كـ Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Osama_Phone_IPA
+          name: Osama_Phone_iOS_IPA
           path: osama_phone.ipa
+          retention-days: 30
 
       - name: 🌐 إنشاء إصدار Release وتوفير رابط تحميل مباشر
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         with:
-          tag_name: v1.0.0
-          name: Osama Phone iOS App v1.0.0
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Osama Phone iOS v1.0.${{ github.run_number }}"
+          draft: false
+          prerelease: false
           body: |
             📱 **تطبيق أسامة فون لنظام iOS (iPhone)**
-            - تم البناء بنجاح عبر GitHub Actions.
-            - يمكنك تحميل ملف `osama_phone.ipa` وتثبيته عبر Sideloadly أو AltStore أو TrollStore.
+            - تم البناء والتحزيم بنجاح.
+            - يمكنك تحميل ملف `osama_phone.ipa` وتثبيته على جهازك عبر Sideloadly أو AltStore أو TrollStore.
           files: |
             osama_phone.ipa
         env:
