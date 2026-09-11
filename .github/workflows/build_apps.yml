@@ -60,8 +60,13 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: 📦 تنزيل حزم فلاتر
-        run: flutter pub get
+      - name: 📦 تنزيل حزم فلاتر وتجهيز CocoaPods
+        run: |
+          flutter precache --ios
+          flutter pub get
+          cd ios
+          pod install || true
+          cd ..
 
       - name: 🔨 تجميع وبناء ملف iOS
         run: flutter build ios --release --no-codesign
