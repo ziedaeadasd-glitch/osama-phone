@@ -17,17 +17,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   StoreSettings _settings = StoreSettings();
   bool _isLoading = true;
 
-  // قوائم البيانات
-  List<Product> _phones = [];
-  List<Product> _accessories = [];
-  List<ServiceItem> _programmingServices = [];
-  List<ServiceItem> _maintenanceServices = [];
-  List<ServiceItem> _financialServices = [];
+  // قوائم البيانات مهيأة مسبقاً بالبيانات الكاملة للمتجر
+  List<Product> _phones = DefaultAppData.defaultPhones;
+  List<Product> _accessories = DefaultAppData.defaultAccessories;
+  List<ServiceItem> _programmingServices = DefaultAppData.defaultProgramming;
+  List<ServiceItem> _maintenanceServices = DefaultAppData.defaultMaintenance;
+  List<ServiceItem> _financialServices = DefaultAppData.defaultFinancial;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _isLoading = false;
     _loadAllData();
   }
 
@@ -37,9 +38,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  /// تحميل كافة البيانات من السيرفر المحلي
+  /// تحميل وتحديث البيانات من السيرفر العالمي
   Future<void> _loadAllData() async {
-    setState(() => _isLoading = true);
     try {
       final results = await Future.wait([
         ApiService.getSettings(),
@@ -50,17 +50,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ApiService.getServices(type: 'financial'),
       ]);
 
+      if (!mounted) return;
       setState(() {
-        _settings = results[0] as StoreSettings;
-        _phones = results[1] as List<Product>;
-        _accessories = results[2] as List<Product>;
-        _programmingServices = results[3] as List<ServiceItem>;
-        _maintenanceServices = results[4] as List<ServiceItem>;
-        _financialServices = results[5] as List<ServiceItem>;
+        final newSettings = results[0] as StoreSettings;
+        final newPhones = results[1] as List<Product>;
+        final newAccessories = results[2] as List<Product>;
+        final newProgramming = results[3] as List<ServiceItem>;
+        final newMaintenance = results[4] as List<ServiceItem>;
+        final newFinancial = results[5] as List<ServiceItem>;
+
+        _settings = newSettings;
+        if (newPhones.isNotEmpty) _phones = newPhones;
+        if (newAccessories.isNotEmpty) _accessories = newAccessories;
+        if (newProgramming.isNotEmpty) _programmingServices = newProgramming;
+        if (newMaintenance.isNotEmpty) _maintenanceServices = newMaintenance;
+        if (newFinancial.isNotEmpty) _financialServices = newFinancial;
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
