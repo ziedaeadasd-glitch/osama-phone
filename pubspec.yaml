@@ -1,0 +1,45 @@
+name: osama_phone
+description: "تطبيق أسامة فون - متجر الهواتف والإكسسوارات والبرمجة والصيانة والصيرفة"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # الاتصال بالإنترنت والشبكة المحلية
+  http: ^1.2.1
+
+  # اختيار الصور من المعرض أو الكاميرا لرفعها للسيرفر
+  image_picker: ^1.1.2
+
+  # فتح محادثة الواتساب ورابط خرائط جوجل والاتصال الهاتفي
+  url_launcher: ^6.3.0
+
+  # خطوط عربية حديثة وأنيقة
+  google_fonts: ^6.2.1
+
+  # تخزين توكن الأدمن وإعدادات السيرفر محلياً
+  shared_preferences: ^2.2.3
+
+  # تأثيرات حركية أنيقة لعرض المنتجات والبطاقات
+  flutter_staggered_animations: ^1.1.1
+
+  # أيقونات عصرية
+  cupertino_icons: ^1.0.8
+
+  # تنسيق العملات والأرقام والتواريخ
+  intl: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

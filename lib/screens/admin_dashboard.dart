@@ -1,0 +1,618 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import '../models/app_models.dart';
+import '../services/api_service.dart';
+
+class AdminDashboardScreen extends StatefulWidget {
+  const AdminDashboardScreen({super.key});
+
+  @override
+  State<AdminDashboardScreen> createState() => _AdminDashboardScreenState();
+}
+
+class _AdminDashboardScreenState extends State<AdminDashboardScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  // 1. حقول إضافة منتج
+  final _productFormKey = GlobalKey<FormState>();
+  final _productNameController = TextEditingController();
+  final _productPriceController = TextEditingController();
+  final _productDescController = TextEditingController();
+  String _selectedCategory = 'phones';
+  XFile? _productImage;
+  Uint8List? _productImageBytes;
+
+  // 2. حقول إضافة خدمة / جهاز مبرمج
+  final _serviceFormKey = GlobalKey<FormState>();
+  final _serviceTitleController = TextEditingController();
+  final _servicePriceController = TextEditingController();
+  final _serviceDescController = TextEditingController();
+  String _selectedServiceType = 'programming';
+  XFile? _serviceImage;
+  Uint8List? _serviceImageBytes;
+
+  final ImagePicker _picker = ImagePicker();
+  bool _isSubmitting = false;
+
+  // 3. قوائم الإدارة
+  List<Product> _allProducts = [];
+  List<ServiceItem> _allServices = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _loadAll();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _productNameController.dispose();
+    _productPriceController.dispose();
+    _productDescController.dispose();
+    _serviceTitleController.dispose();
+    _servicePriceController.dispose();
+    _serviceDescController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAll() async {
+    setState(() => _isLoading = true);
+    final products = await ApiService.getProducts();
+    final services = await ApiService.getServices();
+    if (mounted) {
+      setState(() {
+        _allProducts = products;
+        _allServices = services;
+        _isLoading = false;
+      });
+    }
+  }
+
+  // --- دوال اختيار الصور ---
+  Future<void> _pickProductImage(ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(source: source, imageQuality: 85);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _productImage = file;
+          _productImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking product image: $e');
+    }
+  }
+
+  Future<void> _pickServiceImage(ImageSource source) async {
+    try {
+      final file = await _picker.pickImage(source: source, imageQuality: 85);
+      if (file != null) {
+        final bytes = await file.readAsBytes();
+        setState(() {
+          _serviceImage = file;
+          _serviceImageBytes = bytes;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking service image: $e');
+    }
+  }
+
+  // --- حفظ منتج ---
+  Future<void> _submitProduct() async {
+    if (!_productFormKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+
+    Map<String, dynamic> res;
+    if (kIsWeb || _productImage == null) {
+      res = await ApiService.addProduct(
+        category: _selectedCategory,
+        name: _productNameController.text.trim(),
+        price: double.tryParse(_productPriceController.text.trim()) ?? 0.0,
+        description: _productDescController.text.trim(),
+        imageBytes: _productImageBytes,
+        imageName: _productImage?.name,
+      );
+    } else {
+      res = await ApiService.addProduct(
+        category: _selectedCategory,
+        name: _productNameController.text.trim(),
+        price: double.tryParse(_productPriceController.text.trim()) ?? 0.0,
+        description: _productDescController.text.trim(),
+        imageFile: File(_productImage!.path),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'], style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
+      );
+      _productNameController.clear();
+      _productPriceController.clear();
+      _productDescController.clear();
+      setState(() {
+        _productImage = null;
+        _productImageBytes = null;
+      });
+      _loadAll();
+      _tabController.animateTo(2);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'], style: GoogleFonts.cairo()), backgroundColor: const Color(0xFFEF4444)),
+      );
+    }
+  }
+
+  // --- حفظ خدمة / جهاز مبرمج ---
+  Future<void> _submitService() async {
+    if (!_serviceFormKey.currentState!.validate()) return;
+    setState(() => _isSubmitting = true);
+
+    Map<String, dynamic> res;
+    if (kIsWeb || _serviceImage == null) {
+      res = await ApiService.addService(
+        type: _selectedServiceType,
+        title: _serviceTitleController.text.trim(),
+        price: _servicePriceController.text.trim(),
+        description: _serviceDescController.text.trim(),
+        managerNote: _selectedServiceType == 'programming' ? 'بإدارة: زيد إياد' : 'فني معتمد',
+        imageBytes: _serviceImageBytes,
+        imageName: _serviceImage?.name,
+      );
+    } else {
+      res = await ApiService.addService(
+        type: _selectedServiceType,
+        title: _serviceTitleController.text.trim(),
+        price: _servicePriceController.text.trim(),
+        description: _serviceDescController.text.trim(),
+        managerNote: _selectedServiceType == 'programming' ? 'بإدارة: زيد إياد' : 'فني معتمد',
+        imageFile: File(_serviceImage!.path),
+      );
+    }
+
+    if (!mounted) return;
+    setState(() => _isSubmitting = false);
+
+    if (res['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'], style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
+      );
+      _serviceTitleController.clear();
+      _servicePriceController.clear();
+      _serviceDescController.clear();
+      setState(() {
+        _serviceImage = null;
+        _serviceImageBytes = null;
+      });
+      _loadAll();
+      _tabController.animateTo(2);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res['message'], style: GoogleFonts.cairo()), backgroundColor: const Color(0xFFEF4444)),
+      );
+    }
+  }
+
+  // --- حذف منتج ---
+  Future<void> _deleteProduct(Product item) async {
+    final ok = await ApiService.deleteProduct(item.id);
+    if (ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم حذف "${item.name}"', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
+      );
+      _loadAll();
+    }
+  }
+
+  // --- حذف خدمة ---
+  Future<void> _deleteService(ServiceItem item) async {
+    final ok = await ApiService.deleteService(item.id);
+    if (ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم حذف "${item.title}"', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
+      );
+      _loadAll();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('لوحة تحكم أسامة فون', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+        actions: [
+          IconButton(
+            tooltip: 'تسجيل الخروج',
+            icon: const Icon(Icons.logout, color: Color(0xFFEF4444)),
+            onPressed: () async {
+              await ApiService.clearAdminToken();
+              if (mounted) Navigator.pop(context);
+            },
+          ),
+        ],
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF0EA5E9),
+          labelColor: const Color(0xFF0EA5E9),
+          unselectedLabelColor: const Color(0xFF94A3B8),
+          labelStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
+          tabs: const [
+            Tab(icon: Icon(Icons.add_shopping_cart), text: 'إضافة منتج'),
+            Tab(icon: Icon(Icons.developer_mode), text: 'إضافة خدمة/جهاز برمجة'),
+            Tab(icon: Icon(Icons.inventory), text: 'إدارة المحتوى'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildAddProductTab(),
+          _buildAddServiceTab(),
+          _buildManageTab(),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 1. تبويب إضافة منتج
+  // ---------------------------------------------------------------------------
+  Widget _buildAddProductTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 550),
+          child: Form(
+            key: _productFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('القسم:', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161F30),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF334155)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedCategory,
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFF161F30),
+                      style: GoogleFonts.cairo(color: Colors.white, fontSize: 15),
+                      items: const [
+                        DropdownMenuItem(value: 'phones', child: Text('📱 قسم الموبايلات')),
+                        DropdownMenuItem(value: 'accessories', child: Text('🎧 قسم الإكسسوارات')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedCategory = val);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _productNameController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('اسم المنتج / الموديل', Icons.phone_android),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال اسم المنتج' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _productPriceController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('السعر بالدولار (\$)', Icons.attach_money),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال السعر' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _productDescController,
+                  maxLines: 3,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('المواصفات والتفاصيل والضمان...', Icons.description),
+                ),
+                const SizedBox(height: 18),
+                _buildImagePickerBox(
+                  imageBytes: _productImageBytes,
+                  onPick: _pickProductImage,
+                  onRemove: () => setState(() {
+                    _productImage = null;
+                    _productImageBytes = null;
+                  }),
+                  title: 'صورة المنتج (تُحفظ في سيرفر الحاسوب)',
+                ),
+                const SizedBox(height: 24),
+                _buildSubmitButton(
+                  title: 'حفظ ورفع المنتج للمتجر',
+                  icon: Icons.save,
+                  color: const Color(0xFF10B981),
+                  onPressed: _submitProduct,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 2. تبويب إضافة خدمة أو جهاز مبرمج (زيد إياد برمجة)
+  // ---------------------------------------------------------------------------
+  Widget _buildAddServiceTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 550),
+          child: Form(
+            key: _serviceFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0369A1).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF38BDF8).withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_user, color: Color(0xFFFDE047), size: 24),
+                      const SizedBox(width: 10),
+                      Text(
+                        'إضافة خدمة أو جهاز تم برمجته (بإدارة: زيد إياد)',
+                        style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text('نوع الخدمة:', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF161F30),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF334155)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedServiceType,
+                      isExpanded: true,
+                      dropdownColor: const Color(0xFF161F30),
+                      style: GoogleFonts.cairo(color: Colors.white, fontSize: 15),
+                      items: const [
+                        DropdownMenuItem(value: 'programming', child: Text('💻 قسم البرمجة والسوفتوير والترويج (زيد إياد)')),
+                        DropdownMenuItem(value: 'maintenance', child: Text('🔧 قسم الصيانة وتصليح الأجهزة')),
+                        DropdownMenuItem(value: 'financial', child: Text('💳 قسم التحويلات والخدمات المالية (زين كاش، كي، آسيا)')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedServiceType = val);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _serviceTitleController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('عنوان الخدمة / اسم الجهاز المبرمج', Icons.title),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال العنوان' : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _servicePriceController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('السعر أو التكلفة (مثال: تبدأ من 15\$ أو حسب الموديل)', Icons.price_change),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _serviceDescController,
+                  maxLines: 3,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: _inputDecoration('تفاصيل العملية، نوع الروم، فك الآيكلود، الموديلات المدعومة...', Icons.description),
+                ),
+                const SizedBox(height: 18),
+                _buildImagePickerBox(
+                  imageBytes: _serviceImageBytes,
+                  onPick: _pickServiceImage,
+                  onRemove: () => setState(() {
+                    _serviceImage = null;
+                    _serviceImageBytes = null;
+                  }),
+                  title: 'صورة الجهاز المبرمج أو الخدمة (تظهر في التطبيق والآيفون)',
+                ),
+                const SizedBox(height: 24),
+                _buildSubmitButton(
+                  title: 'نشر الخدمة والجهاز في قسم البرمجة',
+                  icon: Icons.cloud_upload,
+                  color: const Color(0xFF0284C7),
+                  onPressed: _submitService,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. تبويب إدارة وحذف المحتوى
+  // ---------------------------------------------------------------------------
+  Widget _buildManageTab() {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF0EA5E9)));
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        Text('📦 المنتجات المعروضة (${_allProducts.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        const SizedBox(height: 10),
+        ..._allProducts.map((p) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: Container(
+                  width: 50,
+                  height: 50,
+                  color: const Color(0xFF0F172A),
+                  child: p.imageFullUrl != null ? Image.network(p.imageFullUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image)) : const Icon(Icons.phone_android),
+                ),
+                title: Text(p.name, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+                subtitle: Text('${p.price}\$ | ${p.category == 'phones' ? 'موبايلات' : 'إكسسوارات'}', style: GoogleFonts.cairo(color: const Color(0xFF10B981))),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Color(0xFFEF4444)), onPressed: () => _deleteProduct(p)),
+              ),
+            )),
+        const Divider(height: 30, color: Color(0xFF334155)),
+        Text('💻 خدمات وأجهزة البرمجة والصيانة (${_allServices.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        const SizedBox(height: 10),
+        ..._allServices.map((s) => Card(
+              margin: const EdgeInsets.only(bottom: 10),
+              child: ListTile(
+                leading: Container(
+                  width: 50,
+                  height: 50,
+                  color: const Color(0xFF0F172A),
+                  child: s.imageFullUrl != null ? Image.network(s.imageFullUrl!, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.developer_mode)) : const Icon(Icons.terminal),
+                ),
+                title: Text(s.title, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+                subtitle: Text('${s.type == 'programming' ? 'برمجة (زيد إياد)' : 'صيانة'} | ${s.price}', style: GoogleFonts.cairo(color: const Color(0xFF38BDF8))),
+                trailing: IconButton(icon: const Icon(Icons.delete, color: Color(0xFFEF4444)), onPressed: () => _deleteService(s)),
+              ),
+            )),
+      ],
+    );
+  }
+
+  // --- عناصر مساعدة للواجهة ---
+  Widget _buildImagePickerBox({
+    required Uint8List? imageBytes,
+    required Function(ImageSource) onPick,
+    required VoidCallback onRemove,
+    required String title,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: const Color(0xFF161F30),
+              builder: (ctx) => SafeArea(
+                child: Wrap(
+                  children: [
+                    ListTile(
+                      leading: const Icon(Icons.photo_library, color: Color(0xFF0EA5E9)),
+                      title: Text('المعرض (Gallery)', style: GoogleFonts.cairo(color: Colors.white)),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        onPick(ImageSource.gallery);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.camera_alt, color: Color(0xFF10B981)),
+                      title: Text('الكاميرا (Camera)', style: GoogleFonts.cairo(color: Colors.white)),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        onPick(ImageSource.camera);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+          child: Container(
+            width: double.infinity,
+            height: 160,
+            decoration: BoxDecoration(
+              color: const Color(0xFF161F30),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: imageBytes != null ? const Color(0xFF10B981) : const Color(0xFF334155), width: 1.5),
+            ),
+            child: imageBytes != null
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      ClipRRect(borderRadius: BorderRadius.circular(14), child: Image.memory(imageBytes, fit: BoxFit.contain)),
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: IconButton(
+                          icon: const Icon(Icons.cancel, color: Color(0xFFEF4444), size: 28),
+                          onPressed: onRemove,
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.add_a_photo_outlined, size: 40, color: Color(0xFF0EA5E9)),
+                      const SizedBox(height: 6),
+                      Text('اضغط لاختيار صورة من جهازك / الآيفون', style: GoogleFonts.cairo(color: const Color(0xFF94A3B8), fontSize: 13)),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        icon: _isSubmitting ? const SizedBox() : Icon(icon, size: 20),
+        label: _isSubmitting
+            ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+            : Text(title, style: GoogleFonts.cairo(fontSize: 15, fontWeight: FontWeight.bold)),
+        onPressed: _isSubmitting ? null : onPressed,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.cairo(color: Colors.white60, fontSize: 13),
+      filled: true,
+      fillColor: const Color(0xFF161F30),
+      prefixIcon: Icon(icon, color: const Color(0xFF0EA5E9), size: 20),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF334155))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5)),
+    );
+  }
+}
