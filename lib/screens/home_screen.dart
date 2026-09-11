@@ -147,15 +147,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0EA5E9).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/logo.png',
+                height: 34,
+                width: 34,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.phone_android, color: Color(0xFF0EA5E9), size: 24),
               ),
-              child: const Icon(Icons.phone_android, color: Color(0xFF0EA5E9), size: 22),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 10),
             Text(
               'أسامة فون',
               style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),

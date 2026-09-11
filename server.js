@@ -28,12 +28,40 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // تفعيل CORS للسماح لتطبيق Flutter بالتواصل مع السيرفر
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: '*' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// إتاحة مجلد الصور كملفات ثابتة Static Files
-app.use('/uploads', express.static(uploadsDir));
+// إتاحة مجلد الصور كملفات ثابتة مع تفعيل الهيدرز
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+}, express.static(uploadsDir));
+
+// دالة مساعدة لحفظ الصور المرسلة بصيغة Base64
+function saveBase64Image(base64Str, prefix = 'product') {
+  if (!base64Str || typeof base64Str !== 'string') return '';
+  try {
+    const matches = base64Str.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer;
+    let ext = '.png';
+    if (matches && matches.length === 3) {
+      buffer = Buffer.from(matches[2], 'base64');
+      const mime = matches[1];
+      if (mime.includes('jpeg') || mime.includes('jpg')) ext = '.jpg';
+      else if (mime.includes('webp')) ext = '.webp';
+    } else {
+      buffer = Buffer.from(base64Str, 'base64');
+    }
+    const filename = `${prefix}_${Date.now()}_${Math.round(Math.random() * 1e4)}${ext}`;
+    fs.writeFileSync(path.join(uploadsDir, filename), buffer);
+    return `/uploads/${filename}`;
+  } catch (e) {
+    console.error('Error saving base64 image:', e);
+    return '';
+  }
+}
 
 // -------------------------------------------------------------
 // 2. إعداد Multer لرفع وحفظ الصور محلياً
@@ -276,7 +304,13 @@ app.post('/api/products', requireAdmin, upload.single('image'), (req, res) => {
     });
   }
 
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : (req.body.image_url || '');
+  let imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
+  if (!imageUrl && req.body.image_base64) {
+    imageUrl = saveBase64Image(req.body.image_base64, 'product');
+  }
+  if (!imageUrl && req.body.image_url) {
+    imageUrl = req.body.image_url;
+  }
 
   const sql = `INSERT INTO products (category, name, price, currency, description, image_url) VALUES (?, ?, ?, ?, ?, ?)`;
   const params = [category, name, parseFloat(price), currency || 'USD', description || '', imageUrl];
@@ -395,7 +429,13 @@ app.post('/api/services', requireAdmin, upload.single('image'), (req, res) => {
     return res.status(400).json({ success: false, message: 'نوع الخدمة وعنوانها مطلوبان!' });
   }
 
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : (req.body.image_url || '');
+  let imageUrl = req.file ? `/uploads/${req.file.filename}` : '';
+  if (!imageUrl && req.body.image_base64) {
+    imageUrl = saveBase64Image(req.body.image_base64, 'service');
+  }
+  if (!imageUrl && req.body.image_url) {
+    imageUrl = req.body.image_url;
+  }
   const sql = `INSERT INTO services (type, title, description, price, manager_note, image_url) VALUES (?, ?, ?, ?, ?, ?)`;
   db.run(sql, [type, title, description || '', price || '', manager_note || '', imageUrl], function (err) {
     if (err) return res.status(500).json({ success: false, error: err.message });

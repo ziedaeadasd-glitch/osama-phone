@@ -135,11 +135,14 @@ class ApiService {
       request.fields['currency'] = currency;
       request.fields['description'] = description;
 
-      // إرفاق الصورة إن وجدت
+      // إرفاق الصورة إن وجدت (Multipart + Base64 Fallback)
       if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        request.fields['image_base64'] = base64Encode(bytes);
         request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-      } else if (imageBytes != null && imageName != null) {
-        request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: imageName));
+      } else if (imageBytes != null) {
+        request.fields['image_base64'] = base64Encode(imageBytes);
+        request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: imageName ?? 'img_${DateTime.now().millisecondsSinceEpoch}.png'));
       }
 
       final streamedResponse = await request.send();
@@ -222,9 +225,12 @@ class ApiService {
       request.fields['manager_note'] = managerNote;
 
       if (imageFile != null) {
+        final bytes = await imageFile.readAsBytes();
+        request.fields['image_base64'] = base64Encode(bytes);
         request.files.add(await http.MultipartFile.fromPath('image', imageFile.path));
-      } else if (imageBytes != null && imageName != null) {
-        request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: imageName));
+      } else if (imageBytes != null) {
+        request.fields['image_base64'] = base64Encode(imageBytes);
+        request.files.add(http.MultipartFile.fromBytes('image', imageBytes, filename: imageName ?? 'service_${DateTime.now().millisecondsSinceEpoch}.png'));
       }
 
       final streamedResponse = await request.send();
@@ -296,7 +302,17 @@ class ApiService {
     required String phone,
     required String message,
   }) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    String cleanPhone = phone.replaceAll(RegExp(r'[^0-9]'), '');
+    if (cleanPhone.startsWith('00964')) {
+      cleanPhone = cleanPhone.substring(2);
+    } else if (cleanPhone.startsWith('07')) {
+      cleanPhone = '964${cleanPhone.substring(1)}';
+    } else if (cleanPhone.startsWith('7') && cleanPhone.length == 10) {
+      cleanPhone = '964$cleanPhone';
+    }
+    if (cleanPhone.isEmpty) {
+      cleanPhone = '9647722882273';
+    }
     final url = Uri.parse('https://wa.me/$cleanPhone?text=${Uri.encodeComponent(message)}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
