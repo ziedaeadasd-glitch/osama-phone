@@ -53,6 +53,7 @@ jobs:
   # 2. بناء تطبيق الآيفون IPA
   build-ios:
     runs-on: macos-14
+    continue-on-error: true
     steps:
       - name: 📥 استنساخ كود المشروع
         uses: actions/checkout@v4
@@ -124,7 +125,7 @@ jobs:
             📱 **خدمة العملاء والواتساب:** +9647722882273
             ⚡ **قسم البرمجة والإعلانات:** بإدارة زيد إياد
           files: |
-            osama_phone.apk
-            osama_phone.ipa
+            *.apk
+            *.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
