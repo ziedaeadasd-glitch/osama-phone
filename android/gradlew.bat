@@ -1,5 +1,6 @@
 @if "%DEBUG%" == "" @echo off
 chcp 65001 > nul
+if exist "C:\Program Files\Android\Android Studio\jbr\bin\java.exe" set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
 @rem ##########################################################################
 @rem
 @rem  Gradle startup script for Windows
