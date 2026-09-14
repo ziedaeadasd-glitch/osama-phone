@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.osama_phone"
-    compileSdk = 34
+    compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

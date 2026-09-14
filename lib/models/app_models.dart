@@ -266,7 +266,7 @@ class DefaultAppData {
       type: 'programming',
       title: 'حملات إعلانات وترويج ممول لجميع المنصات',
       description: 'إنشاء وإدارة حملات إعلانية ممولة باحترافية على فيسبوك، إنستغرام، سناب شات، تيك توك، ويوتيوب لزيادة المبيعات والمتابعين',
-      price: 'تبدأ من $10',
+      price: 'تبدأ من \$10',
       managerNote: 'بإدارة: زيد إياد - 07722882273',
       imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&auto=format&fit=crop',
     ),
