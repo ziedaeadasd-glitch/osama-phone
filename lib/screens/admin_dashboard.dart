@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -23,17 +22,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   final _productPriceController = TextEditingController();
   final _productDescController = TextEditingController();
   String _selectedCategory = 'phones';
-  XFile? _productImage;
   Uint8List? _productImageBytes;
+  String? _productImageName;
 
   // 2. حقول إضافة خدمة / جهاز مبرمج
   final _serviceFormKey = GlobalKey<FormState>();
   final _serviceTitleController = TextEditingController();
   final _servicePriceController = TextEditingController();
   final _serviceDescController = TextEditingController();
-  String _selectedServiceType = 'programming';
-  XFile? _serviceImage;
+  String _selectedServiceType = 'completed_programming';
   Uint8List? _serviceImageBytes;
+  String? _serviceImageName;
 
   // 3. حقول إعدادات الرواتب والمتجر
   String _salaryStatus = 'نعم';
@@ -92,27 +91,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     try {
       final file = await _picker.pickImage(
         source: source,
-        imageQuality: 75,
-        maxWidth: 1024,
-        maxHeight: 1024,
+        imageQuality: 50,
+        maxWidth: 640,
+        maxHeight: 640,
       );
       if (file != null) {
         final bytes = await file.readAsBytes();
         setState(() {
-          _productImage = file;
           _productImageBytes = bytes;
+          _productImageName = file.name;
         });
       }
     } catch (e) {
       debugPrint('Error picking product image: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تعذر فتح المعرض/الكاميرا: $e', style: GoogleFonts.cairo()),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-      }
     }
   }
 
@@ -120,27 +111,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     try {
       final file = await _picker.pickImage(
         source: source,
-        imageQuality: 75,
-        maxWidth: 1024,
-        maxHeight: 1024,
+        imageQuality: 50,
+        maxWidth: 640,
+        maxHeight: 640,
       );
       if (file != null) {
         final bytes = await file.readAsBytes();
         setState(() {
-          _serviceImage = file;
           _serviceImageBytes = bytes;
+          _serviceImageName = file.name;
         });
       }
     } catch (e) {
       debugPrint('Error picking service image: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('تعذر فتح المعرض/الكاميرا: $e', style: GoogleFonts.cairo()),
-            backgroundColor: const Color(0xFFEF4444),
-          ),
-        );
-      }
     }
   }
 
@@ -152,48 +135,36 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     final rawPrice = _productPriceController.text.trim();
     final parsedPrice = ApiService.parsePrice(rawPrice);
 
-    Map<String, dynamic> res;
-    if (kIsWeb || _productImage == null) {
-      res = await ApiService.addProduct(
-        category: _selectedCategory,
-        name: _productNameController.text.trim(),
-        price: parsedPrice,
-        description: _productDescController.text.trim(),
-        imageBytes: _productImageBytes,
-        imageName: _productImage?.name,
-      );
-    } else {
-      res = await ApiService.addProduct(
-        category: _selectedCategory,
-        name: _productNameController.text.trim(),
-        price: parsedPrice,
-        description: _productDescController.text.trim(),
-        imageFile: File(_productImage!.path),
-        imageBytes: _productImageBytes,
-      );
-    }
+    final res = await ApiService.addProduct(
+      category: _selectedCategory,
+      name: _productNameController.text.trim(),
+      price: parsedPrice,
+      description: _productDescController.text.trim(),
+      imageBytes: _productImageBytes,
+      imageName: _productImageName,
+    );
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    if (res['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'تم حفظ المنتج بنجاح!', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
-      );
-      _productNameController.clear();
-      _productPriceController.clear();
-      _productDescController.clear();
-      setState(() {
-        _productImage = null;
-        _productImageBytes = null;
-      });
-      _loadAll();
-      _tabController.animateTo(3); // الانتقال لتبويب إدارة المحتوى لرؤية المنتج المضاف
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'فشل إضافة المنتج', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFFEF4444)),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['message'] ?? 'تم حفظ المنتج بنجاح!', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    _productNameController.clear();
+    _productPriceController.clear();
+    _productDescController.clear();
+    setState(() {
+      _productImageBytes = null;
+      _productImageName = null;
+    });
+
+    _loadAll();
+    _tabController.animateTo(3); // الانتقال لتبويب إدارة المحتوى مباشرة لرؤية الجهاز المضاف
   }
 
   // --- حفظ خدمة / جهاز مبرمج أو مكتمل ---
@@ -211,52 +182,39 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
 
     final rawPrice = _servicePriceController.text.trim();
-    final cleanPrice = rawPrice.isNotEmpty ? ApiService.normalizeNumbers(rawPrice) : 'تم الإنجاز ✅';
+    final cleanPrice = rawPrice.isNotEmpty ? ApiService.normalizeNumbers(rawPrice) : 'جاهز للاستلام ✅';
 
-    Map<String, dynamic> res;
-    if (kIsWeb || _serviceImage == null) {
-      res = await ApiService.addService(
-        type: _selectedServiceType,
-        title: _serviceTitleController.text.trim(),
-        price: cleanPrice,
-        description: _serviceDescController.text.trim(),
-        managerNote: note,
-        imageBytes: _serviceImageBytes,
-        imageName: _serviceImage?.name,
-      );
-    } else {
-      res = await ApiService.addService(
-        type: _selectedServiceType,
-        title: _serviceTitleController.text.trim(),
-        price: cleanPrice,
-        description: _serviceDescController.text.trim(),
-        managerNote: note,
-        imageFile: File(_serviceImage!.path),
-        imageBytes: _serviceImageBytes,
-      );
-    }
+    final res = await ApiService.addService(
+      type: _selectedServiceType,
+      title: _serviceTitleController.text.trim(),
+      price: cleanPrice,
+      description: _serviceDescController.text.trim(),
+      managerNote: note,
+      imageBytes: _serviceImageBytes,
+      imageName: _serviceImageName,
+    );
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    if (res['success'] == true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'تم حفظ ونشر الجهاز بنجاح!', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
-      );
-      _serviceTitleController.clear();
-      _servicePriceController.clear();
-      _serviceDescController.clear();
-      setState(() {
-        _serviceImage = null;
-        _serviceImageBytes = null;
-      });
-      _loadAll();
-      _tabController.animateTo(3); // الانتقال لتبويب إدارة المحتوى
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(res['message'] ?? 'فشل إضافة الجهاز', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFFEF4444)),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(res['message'] ?? 'تم نشر الجهاز المكتمل بنجاح!', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    _serviceTitleController.clear();
+    _servicePriceController.clear();
+    _serviceDescController.clear();
+    setState(() {
+      _serviceImageBytes = null;
+      _serviceImageName = null;
+    });
+
+    _loadAll();
+    _tabController.animateTo(3); // الانتقال لتبويب إدارة المحتوى
   }
 
   // --- حذف منتج ---
@@ -288,7 +246,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         title: Text('لوحة تحكم أسامة فون', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
         actions: [
           IconButton(
-            tooltip: 'تحديث البيانات',
+            tooltip: 'تحديث القوائم',
             icon: const Icon(Icons.refresh, color: Color(0xFF38BDF8)),
             onPressed: _loadAll,
           ),
@@ -310,10 +268,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           unselectedLabelColor: const Color(0xFF94A3B8),
           labelStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
-            Tab(icon: Icon(Icons.add_shopping_cart), text: 'إضافة منتج'),
-            Tab(icon: Icon(Icons.developer_mode), text: 'إضافة خدمة / جهاز مكتمل'),
+            Tab(icon: Icon(Icons.add_shopping_cart), text: 'إضافة جهاز / منتج'),
+            Tab(icon: Icon(Icons.check_circle_outline), text: 'إضافة جهاز مكتمل / خدمة'),
             Tab(icon: Icon(Icons.payments), text: 'الرواتب والإعدادات'),
-            Tab(icon: Icon(Icons.inventory), text: 'إدارة المحتوى'),
+            Tab(icon: Icon(Icons.inventory_2_outlined), text: 'إدارة المحتوى والمحذوفات'),
           ],
         ),
       ),
@@ -395,14 +353,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   imageBytes: _productImageBytes,
                   onPick: _pickProductImage,
                   onRemove: () => setState(() {
-                    _productImage = null;
                     _productImageBytes = null;
+                    _productImageName = null;
                   }),
-                  title: 'صورة الجهاز (من الكاميرا أو المعرض)',
+                  title: 'صورة الجهاز (اختياري من الكاميرا أو المعرض)',
                 ),
                 const SizedBox(height: 24),
                 _buildSubmitButton(
-                  title: 'حفظ ورفع الجهاز للمتجر',
+                  title: 'حفظ ونشر الجهاز في المتجر',
                   icon: Icons.save,
                   color: const Color(0xFF10B981),
                   onPressed: _submitProduct,
@@ -416,7 +374,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   // ---------------------------------------------------------------------------
-  // 2. تبويب إضافة خدمة أو جهاز مبرمج (زيد إياد برمجة)
+  // 2. تبويب إضافة خدمة أو جهاز مكتمل (زيد إياد برمجة)
   // ---------------------------------------------------------------------------
   Widget _buildAddServiceTab() {
     return SingleChildScrollView(
@@ -467,7 +425,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                       style: GoogleFonts.cairo(color: Colors.white, fontSize: 15),
                       items: const [
                         DropdownMenuItem(value: 'completed_programming', child: Text('📱 جهاز تم اكتمال برمجته وجاهز للاستلام ✅')),
-                        DropdownMenuItem(value: 'completed_maintenance', child: Text('🔧 جهاز تم اكتمال صيانته وجاهز للاستلام ✅')),
+                        DropdownMenuItem(value: 'completed_maintenance', child: Text('🔧 جهاز تم اكتمال صيانة شاشته/بطاريته وجاهز ✅')),
                         DropdownMenuItem(value: 'programming', child: Text('💻 خدمة برمجة وسوفتوير (زيد إياد)')),
                         DropdownMenuItem(value: 'maintenance', child: Text('🛠️ خدمة صيانة وتصليح هاردوير')),
                         DropdownMenuItem(value: 'financial', child: Text('💳 خدمة مالية وتحويل كاش (زين كاش، كي)')),
@@ -482,8 +440,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 TextFormField(
                   controller: _serviceTitleController,
                   style: const TextStyle(color: Colors.white),
-                  decoration: _inputDecoration('عنوان الخدمة / اسم الجهاز المكتمل', Icons.title),
-                  validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال العنوان أو اسم الجهاز' : null,
+                  decoration: _inputDecoration('عنوان الخدمة / اسم الجهاز المكتمل (مثال: iPhone 13 فك آيكلود)', Icons.title),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'يرجى إدخال اسم الجهاز المكتمل' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -496,21 +454,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                   controller: _serviceDescController,
                   maxLines: 3,
                   style: const TextStyle(color: Colors.white),
-                  decoration: _inputDecoration('تفاصيل العملية، اسم صاحب الجهاز، فك قفل، تصليح شاشة...', Icons.description),
+                  decoration: _inputDecoration('تفاصيل الجهاز، اسم الزبون، نوع السوفتوير، ملاحظات الاستلام...', Icons.description),
                 ),
                 const SizedBox(height: 18),
                 _buildImagePickerBox(
                   imageBytes: _serviceImageBytes,
                   onPick: _pickServiceImage,
                   onRemove: () => setState(() {
-                    _serviceImage = null;
                     _serviceImageBytes = null;
+                    _serviceImageName = null;
                   }),
-                  title: 'صورة الجهاز المكتمل أو الخدمة (تظهر فوراً في التطبيق)',
+                  title: 'صورة الجهاز المكتمل أو الخدمة (تظهر فوراً في التطبيق والآيفون)',
                 ),
                 const SizedBox(height: 24),
                 _buildSubmitButton(
-                  title: 'نشر الجهاز / الخدمة في التطبيق',
+                  title: 'نشر الجهاز المكتمل في التطبيق',
                   icon: Icons.cloud_upload,
                   color: const Color(0xFF0284C7),
                   onPressed: _submitService,
@@ -642,7 +600,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Text('📦 المنتجات المعروضة (${_allProducts.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        Text('📦 المنتجات والأجهزة المعروضة (${_allProducts.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
         const SizedBox(height: 10),
         ..._allProducts.map((p) => Card(
               margin: const EdgeInsets.only(bottom: 10),
@@ -667,7 +625,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               ),
             )),
         const Divider(height: 30, color: Color(0xFF334155)),
-        Text('💻 خدمات وأجهزة البرمجة والصيانة (${_allServices.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
+        Text('💻 الأجهزة المكتملة وخدمات الصيانة والبرمجة (${_allServices.length}):', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white)),
         const SizedBox(height: 10),
         ..._allServices.map((s) => Card(
               margin: const EdgeInsets.only(bottom: 10),
@@ -684,7 +642,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 ),
                 title: Text(s.title, style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
                 subtitle: Text(
-                  '${s.status == 'completed' ? '✅ مكتمل' : (s.type == 'programming' ? 'برمجة (زيد إياد)' : 'صيانة')} | ${s.price}',
+                  '${s.status == 'completed' ? '✅ جهاز مكتمل' : (s.type == 'programming' ? 'برمجة (زيد إياد)' : 'صيانة')} | ${s.price}',
                   style: GoogleFonts.cairo(color: s.status == 'completed' ? const Color(0xFF10B981) : const Color(0xFF38BDF8)),
                 ),
                 trailing: IconButton(
