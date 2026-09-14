@@ -52,7 +52,12 @@ jobs:
           path: flutter_build.log
 
       - name: 📦 إعادة تسمية ونقل الـ APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk osama_phone.apk
+        run: |
+          find build/ -name "*release*.apk" -exec cp {} osama_phone.apk \;
+          if [ ! -f osama_phone.apk ]; then
+            find build/ -name "*.apk" -exec cp {} osama_phone.apk \;
+          fi
+          ls -lh osama_phone.apk
 
       - name: 🚀 رفع ملف الـ APK
         uses: actions/upload-artifact@v4
