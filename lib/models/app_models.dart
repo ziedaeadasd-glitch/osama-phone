@@ -138,7 +138,7 @@ class StoreSettings {
 
   StoreSettings({
     this.storeName = 'أسامة فون - Osama Phone',
-    this.phoneNumber = '07722882273',
+    this.phoneNumber = '+9647722882273',
     this.whatsappNumber = '+9647722882273',
     this.programmingWhatsapp = '+9647722882273',
     this.mapsUrl = 'https://www.google.com/maps/place/%D8%A7%D8%B3%D8%A7%D9%85%D8%A9+%D9%81%D9%88%D9%86%E2%80%AD/@36.3758306,43.1444241,17z/data=!3m1!4b1!4m6!3m5!1s0x400795005c1f6575:0xaff461d7e686bd2d!8m2!3d36.3758263!4d43.1418492!16s%2Fg%2F11w409hr2y?entry=ttu',
@@ -150,7 +150,7 @@ class StoreSettings {
   factory StoreSettings.fromJson(Map<String, dynamic> json) {
     return StoreSettings(
       storeName: json['store_name'] ?? 'أسامة فون - Osama Phone',
-      phoneNumber: json['phone_number'] ?? '07722882273',
+      phoneNumber: json['phone_number'] ?? '+9647722882273',
       whatsappNumber: json['whatsapp_number'] ?? '+9647722882273',
       programmingWhatsapp: json['programming_whatsapp'] ?? '+9647722882273',
       mapsUrl: json['maps_url'] ?? 'https://www.google.com/maps/place/%D8%A7%D8%B3%D8%A7%D9%85%D8%A9+%D9%81%D9%88%D9%86%E2%80%AD/@36.3758306,43.1444241,17z/data=!3m1!4b1!4m6!3m5!1s0x400795005c1f6575:0xaff461d7e686bd2d!8m2!3d36.3758263!4d43.1418492!16s%2Fg%2F11w409hr2y?entry=ttu',
@@ -170,7 +170,7 @@ class DefaultAppData {
       name: 'iPhone 15 Pro Max',
       price: 1199.0,
       description: 'ذاكرة 256GB - بطارية 100% - جميع الألوان متوفرة مع ضمان أسامة فون',
-      imageUrl: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 2,
@@ -178,7 +178,7 @@ class DefaultAppData {
       name: 'Samsung Galaxy S24 Ultra',
       price: 1050.0,
       description: 'ذاكرة 512GB - ذكاء اصطناعي Galaxy AI - قلم S-Pen - كاميرا 200MP',
-      imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 3,
@@ -186,7 +186,7 @@ class DefaultAppData {
       name: 'iPhone 14 Pro',
       price: 850.0,
       description: 'ذاكرة 128GB - نظافة 100% - ضمان فحص شامل في المحل',
-      imageUrl: 'https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 4,
@@ -194,7 +194,7 @@ class DefaultAppData {
       name: 'Xiaomi 14 Ultra',
       price: 920.0,
       description: 'كاميرات Leica احترافية - شحن فائق السرعة 90W - أداء جبار',
-      imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=800&auto=format&fit=crop&q=80',
     ),
   ];
 
@@ -205,7 +205,7 @@ class DefaultAppData {
       name: 'شاحن أنكر الأصلي 65W GaN',
       price: 35.0,
       description: 'شاحن سريع يدعم جميع هواتف آيفون وسامسونج واللابتوبات بتقنية IQ3',
-      imageUrl: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 102,
@@ -213,7 +213,7 @@ class DefaultAppData {
       name: 'سماعات AirPods Pro 2 الأصلية',
       price: 210.0,
       description: 'عزل ضوضاء نشط فائق - صوت مكاني - منفذ Type-C - ضمان رسمي',
-      imageUrl: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 103,
@@ -221,7 +221,7 @@ class DefaultAppData {
       name: 'باور بانك Joyroom 30000mAh',
       price: 28.0,
       description: 'شحن سريع 22.5W - شاشة رقمية لعرض نسبة الشحن - منافذ متعددة',
-      imageUrl: 'https://images.unsplash.com/photo-1609592807904-453716a4be74?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1609592807904-453716a4be74?w=800&auto=format&fit=crop&q=80',
     ),
     Product(
       id: 104,
@@ -229,7 +229,7 @@ class DefaultAppData {
       name: 'بكج حماية شاشة وكفر مغناطيسي MagSafe',
       price: 15.0,
       description: 'زجاج مضاد للكسر والخدش مع حماية لعدسات الكاميرا وكفر شفاف مضاد للاصفرار',
-      imageUrl: 'https://images.unsplash.com/photo-1601593346740-925612772716?w=600&auto=format&fit=crop',
+      imageUrl: 'https://images.unsplash.com/photo-1601593346740-925612772716?w=800&auto=format&fit=crop&q=80',
     ),
   ];
 
@@ -240,7 +240,7 @@ class DefaultAppData {
       title: 'تخطي وفك حسابات آيكلود (iCloud Bypass)',
       description: 'خدمة فك وتخطي حسابات iCloud لجميع موديلات الآيفون والآيباد مع تفعيل الشبكة والإشعارات',
       price: 'حسب الموديل',
-      managerNote: 'بإدارة: زيد إياد - 07722882273',
+      managerNote: 'بإدارة: زيد إياد - +9647722882273',
       imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600&auto=format&fit=crop',
     ),
     ServiceItem(
@@ -249,7 +249,7 @@ class DefaultAppData {
       title: 'فك الشفرات الدولية وإصلاح شبكات السيم كارد',
       description: 'فك شفرات الهواتف الأمريكية والأوروبية المقفلة على شبكات AT&T, T-Mobile, Verizon وإصلاح الشبكة',
       price: 'حسب الشبكة',
-      managerNote: 'بإدارة: زيد إياد - 07722882273',
+      managerNote: 'بإدارة: زيد إياد - +9647722882273',
       imageUrl: 'https://images.unsplash.com/photo-1563770660941-20978e870e26?w=600&auto=format&fit=crop',
     ),
     ServiceItem(
@@ -258,7 +258,7 @@ class DefaultAppData {
       title: 'تفليش رومات رسمية وتحديث الأنظمة المعلقة',
       description: 'حل مشاكل التعليق على الشعار (Bootloop) وتثبيت أحدث الإصدارات الرسمية لهواتف سامسونج وشاومي وآيفون',
       price: '10,000 د.ع',
-      managerNote: 'بإدارة: زيد إياد - 07722882273',
+      managerNote: 'بإدارة: زيد إياد - +9647722882273',
       imageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop',
     ),
     ServiceItem(
@@ -267,7 +267,7 @@ class DefaultAppData {
       title: 'حملات إعلانات وترويج ممول لجميع المنصات',
       description: 'إنشاء وإدارة حملات إعلانية ممولة باحترافية على فيسبوك، إنستغرام، سناب شات، تيك توك، ويوتيوب لزيادة المبيعات والمتابعين',
       price: 'تبدأ من \$10',
-      managerNote: 'بإدارة: زيد إياد - 07722882273',
+      managerNote: 'بإدارة: زيد إياد - +9647722882273',
       imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&auto=format&fit=crop',
     ),
   ];

@@ -275,6 +275,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       itemCount: products.length,
       itemBuilder: (context, index) {
         final item = products[index];
+        final displayImg = (item.imageFullUrl != null && item.imageFullUrl!.isNotEmpty)
+            ? item.imageFullUrl!
+            : (item.imageUrl.isNotEmpty ? item.imageUrl : null);
+
         return Card(
           clipBehavior: Clip.antiAlias,
           child: Column(
@@ -286,9 +290,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF0F172A),
-                  child: item.imageFullUrl != null && item.imageFullUrl!.isNotEmpty
+                  child: displayImg != null
                       ? Image.network(
-                          item.imageFullUrl!,
+                          displayImg,
                           fit: BoxFit.cover,
                           errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(),
                           loadingBuilder: (ctx, child, progress) {
@@ -370,7 +374,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     '📌 الاسم: ${item.name}\n'
                                     '💰 السعر: ${item.price} \$\n'
                                     'هل المنتج متوفر لديكم؟';
-                                ApiService.launchWhatsApp(phone: '07722882273', message: msg);
+                                ApiService.launchWhatsApp(phone: '+9647722882273', message: msg);
                               },
                             ),
                           ),
@@ -473,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               InkWell(
                 onTap: () {
                   ApiService.launchWhatsApp(
-                    phone: '07722882273',
+                    phone: '+9647722882273',
                     message: 'مرحباً أستاذ زيد إياد، أود الاستفسار وطلب خدمات البرمجة أو الترويج الممول.',
                   );
                 },
@@ -491,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       const Icon(Icons.chat, color: Color(0xFF25D366), size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'واتساب مباشر لزيد إياد: 07722882273',
+                        'واتساب مباشر لزيد إياد: +9647722882273',
                         style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -616,7 +620,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     final msg = 'مرحباً أستاذ زيد إياد، أود عمل حملة ترويجية على منصة:\n'
                         '📢 المنصة: ${p['name']}\n'
                         'هل يمكن معرفة الباقات والتفاصيل؟';
-                    ApiService.launchWhatsApp(phone: '07722882273', message: msg);
+                    ApiService.launchWhatsApp(phone: '+9647722882273', message: msg);
                   },
                 ),
               ),
@@ -633,33 +637,43 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       decoration: BoxDecoration(
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.6)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF59E0B).withOpacity(0.12),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: const Color(0xFFF59E0B),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(
-              'إعلان هام',
-              style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.bolt, size: 15, color: Colors.black),
+                const SizedBox(width: 2),
+                Text(
+                  'شريط الأخبار',
+                  style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Text(
-                '⚡ زيد إياد برمجة ⚡ تخطي حسابات آيكلود - فك شفرات - رومات رسمية ⚡ ترويج ممول فيسبوك وإنستا وسناب وتيك توك ويوتيوب ⚡ واتساب: 07722882273 ⚡',
-                style: GoogleFonts.cairo(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFDE047),
-                ),
+            child: MarqueeTickerWidget(
+              text: '⚡ بأدارة زيد اياد كل ماتحتاجه ⚡ تخطي حسابات آيكلود ⚡ فك شفرات دولية ⚡ رومات وسوفتوير ⚡ ترويج ممول فيسبوك وإنستغرام وسناب وتيك توك ويوتيوب ⚡ واتساب: +9647722882273 ⚡ بأدارة زيد اياد كل ماتحتاجه ⚡',
+              style: GoogleFonts.cairo(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFFFDE047),
               ),
             ),
           ),
@@ -888,7 +902,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 final msg = 'مرحباً أسامة فون، أود الاستفسار عن الخدمة المالية التالية:\n'
                     '💳 الخدمة: $title\n'
                     'هل الخدمة متوفرة حالياً لديكم؟';
-                ApiService.launchWhatsApp(phone: '07722882273', message: msg);
+                ApiService.launchWhatsApp(phone: '+9647722882273', message: msg);
               },
             ),
           ],
@@ -901,7 +915,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // كرت الخدمات العامة (برمجة، صيانة، أجهزة مبرمجة بالصور)
   // ---------------------------------------------------------------------------
   Widget _buildServiceCard(ServiceItem service, {required bool isProgramming}) {
-    final hasImage = service.imageFullUrl != null && service.imageFullUrl!.isNotEmpty;
+    final displayImg = (service.imageFullUrl != null && service.imageFullUrl!.isNotEmpty)
+        ? service.imageFullUrl!
+        : ((service.imageUrl != null && service.imageUrl!.isNotEmpty) ? service.imageUrl : null);
+    final hasImage = displayImg != null;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -915,7 +932,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               height: 190,
               color: const Color(0xFF0F172A),
               child: Image.network(
-                service.imageFullUrl!,
+                displayImg,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const Center(
                   child: Icon(Icons.phone_iphone, size: 50, color: Colors.white24),
@@ -996,7 +1013,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () {
-                        final phone = isProgramming ? '07722882273' : _settings.whatsappNumber;
+                        final phone = isProgramming ? '+9647722882273' : _settings.whatsappNumber;
                         final msg = 'مرحباً، أود الاستفسار وطلب الخدمة التالية:\n'
                             '📌 العنوان: ${service.title}\n'
                             '📝 التفاصيل: ${service.description}\n'
@@ -1072,7 +1089,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 onPressed: () {
                   ApiService.launchWhatsApp(
-                    phone: '07722882273',
+                    phone: '+9647722882273',
                     message: 'مرحباً أسامة فون، أود الاستفسار عن خدماتكم ومنتجاتكم.',
                   );
                 },
@@ -1080,6 +1097,90 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// شريط متحرك انسيابي لعرض الإعلانات والأخبار
+class MarqueeTickerWidget extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  final double velocity;
+
+  const MarqueeTickerWidget({
+    super.key,
+    required this.text,
+    this.style,
+    this.velocity = 40.0,
+  });
+
+  @override
+  State<MarqueeTickerWidget> createState() => _MarqueeTickerWidgetState();
+}
+
+class _MarqueeTickerWidgetState extends State<MarqueeTickerWidget> {
+  late final ScrollController _scrollController;
+  bool _isScrolling = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _startScrolling());
+  }
+
+  void _startScrolling() async {
+    if (_isScrolling) return;
+    _isScrolling = true;
+
+    while (mounted) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted || !_scrollController.hasClients) break;
+      
+      final maxScroll = _scrollController.position.maxScrollExtent;
+      if (maxScroll <= 0) {
+        await Future.delayed(const Duration(seconds: 1));
+        continue;
+      }
+
+      final durationMs = ((maxScroll / widget.velocity) * 1000).toInt().clamp(4000, 40000);
+      
+      if (_scrollController.hasClients) {
+        await _scrollController.animateTo(
+          maxScroll,
+          duration: Duration(milliseconds: durationMs),
+          curve: Curves.linear,
+        );
+      }
+
+      if (!mounted || !_scrollController.hasClients) break;
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0.0);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Row(
+        children: [
+          Text(widget.text, style: widget.style),
+          const SizedBox(width: 40),
+          Text(widget.text, style: widget.style),
+        ],
       ),
     );
   }

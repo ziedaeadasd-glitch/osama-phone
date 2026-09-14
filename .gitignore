@@ -44,3 +44,4 @@ serviceAccountKey.json
 
 # Widget Preview related
 .widget_preview/
+*.apk
