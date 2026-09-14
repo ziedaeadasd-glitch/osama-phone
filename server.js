@@ -13,7 +13,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // كلمة السر والتوكن السري الخاص بالمدير
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'osama2026';
@@ -22,7 +22,7 @@ const ADMIN_SECRET_TOKEN = 'osama_phone_admin_secure_token_2026';
 // -------------------------------------------------------------
 // 1. إعداد مسارات التخزين والـ Middleware
 // -------------------------------------------------------------
-const uploadsDir = path.join(__dirname, 'uploads');
+const uploadsDir = process.env.UPLOADS_DIR || (fs.existsSync('/opt/render/project/src') ? '/opt/render/project/src/uploads' : path.join(__dirname, 'uploads'));
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -95,7 +95,7 @@ const upload = multer({
 // -------------------------------------------------------------
 // 3. إعداد وتهيئة قاعدة بيانات SQLite
 // -------------------------------------------------------------
-const dbPath = path.join(__dirname, 'database.sqlite');
+const dbPath = process.env.DATABASE_PATH || (fs.existsSync('/opt/render/project/src') ? '/opt/render/project/src/database.sqlite' : path.join(__dirname, 'database.sqlite'));
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('❌ خطأ في الاتصال بقاعدة بيانات SQLite:', err.message);
