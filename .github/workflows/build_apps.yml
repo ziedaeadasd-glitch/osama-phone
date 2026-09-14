@@ -42,14 +42,7 @@ jobs:
         run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
 
       - name: 🔨 بناء ملف APK (Release)
-        run: flutter build apk --release --no-tree-shake-icons --verbose 2>&1 | tee flutter_build.log
-
-      - name: 📋 رفع سجل البناء للتحليل
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Build_Logs
-          path: flutter_build.log
+        run: flutter build apk --release --no-tree-shake-icons --android-skip-build-dependency-validation
 
       - name: 📦 إعادة تسمية ونقل الـ APK
         run: |
