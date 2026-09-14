@@ -49,9 +49,13 @@
 	<string>يحتاج التطبيق للوصول إلى معرض الصور لاختيار صور المنتجات والأجهزة المبرمجة لرفعها للمتجر.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>يحتاج التطبيق إلى الكاميرا لالتقاط صور للمنتجات وخدمات الصيانة والبرمجة.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>يحتاج التطبيق للاتصال بالشبكة وخادم أسامة فون ومزامنة البيانات.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>LSApplicationQueriesSchemes</key>
