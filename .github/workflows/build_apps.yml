@@ -65,6 +65,25 @@ jobs:
           name: Osama_Phone_Android_APK
           path: osama_phone.apk
 
+      - name: 🌐 نشر ملف الـ APK مباشرة في الـ Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v1.0.0"
+          name: "أسامة فون - Osama Phone v1.0.0"
+          draft: false
+          prerelease: false
+          make_latest: true
+          body: |
+            🎉 **روابط التحميل المباشرة لتطبيق أسامة فون (Osama Phone):**
+            
+            - 🤖 **نظام أندرويد (Android):** حمّل ملف `osama_phone.apk` وثبّته مباشرة على هاتفك.
+            
+            📱 **خدمة العملاء والواتساب:** +9647722882273
+            ⚡ **قسم البرمجة والإعلانات:** بإدارة زيد إياد
+          files: osama_phone.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   # 2. بناء تطبيق الآيفون IPA
   build-ios:
     runs-on: macos-14
