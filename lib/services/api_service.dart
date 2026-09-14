@@ -293,6 +293,25 @@ class ApiService {
     }
   }
 
+  /// تحديث الإعدادات العامة وحالة الرواتب
+  static Future<bool> updateSettings(Map<String, dynamic> settings) async {
+    try {
+      final baseUrl = await getBaseUrl();
+      final token = await getAdminToken();
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/settings'),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token ?? '',
+        },
+        body: jsonEncode(settings),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // 4. دوال التفاعل الخارجية (واتساب وخرائط جوجل)
   // ---------------------------------------------------------------------------

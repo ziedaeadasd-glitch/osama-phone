@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
-  /// حوار تعديل رابط السيرفر المحلي
+  /// حوار تعديل رابط السيرفر العالمي / المحلي
   void _showServerConfigDialog() async {
     final currentUrl = await ApiService.getBaseUrl();
     final controller = TextEditingController(text: currentUrl);
@@ -82,53 +82,108 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (!mounted) return;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF161F30),
-        title: Text(
-          'إعدادات السيرفر المحلي',
-          style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'أدخل عنوان IP الخاص بالكمبيوتر (مثال: http://192.168.1.184:3000):',
-              style: GoogleFonts.cairo(fontSize: 13, color: const Color(0xFF94A3B8)),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFF0B0F19),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                prefixIcon: const Icon(Icons.computer, color: Color(0xFF0EA5E9)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDlgState) => AlertDialog(
+          backgroundColor: const Color(0xFF161F30),
+          title: Row(
+            children: [
+              const Icon(Icons.cloud_sync, color: Color(0xFF0EA5E9)),
+              const SizedBox(width: 8),
+              Text(
+                'ربط السيرفر العالمي / المحلي',
+                style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
               ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'اختر السيرفر أو أدخل الرابط السحابي للاتصال ومزامنة الصور والبيانات:',
+                style: GoogleFonts.cairo(fontSize: 12, color: const Color(0xFF94A3B8)),
+              ),
+              const SizedBox(height: 12),
+              // أزرار الاختيار السريع
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF38BDF8),
+                        side: const BorderSide(color: Color(0xFF38BDF8)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      icon: const Icon(Icons.language, size: 16),
+                      label: Text('سيرفر عالمي', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        setDlgState(() {
+                          controller.text = 'https://osama-phone-api.onrender.com';
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFF59E0B),
+                        side: const BorderSide(color: Color(0xFFF59E0B)),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                      icon: const Icon(Icons.wifi, size: 16),
+                      label: Text('سيرفر محلي', style: GoogleFonts.cairo(fontSize: 11, fontWeight: FontWeight.bold)),
+                      onPressed: () {
+                        setDlgState(() {
+                          controller.text = 'http://10.0.2.2:10000';
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                style: const TextStyle(color: Colors.white, fontSize: 13),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFF0B0F19),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  prefixIcon: const Icon(Icons.link, color: Color(0xFF0EA5E9)),
+                  hintText: 'https://osama-phone-api.onrender.com',
+                  hintStyle: const TextStyle(color: Colors.white24, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+              ),
+              icon: const Icon(Icons.check, size: 16),
+              label: Text('حفظ واتصال', style: GoogleFonts.cairo(fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                await ApiService.setBaseUrl(controller.text);
+                if (!mounted) return;
+                Navigator.pop(ctx);
+                _loadAllData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('تم حفظ رابط السيرفر وجارٍ مزامنة البيانات والمنتجات...', style: GoogleFonts.cairo()),
+                    backgroundColor: const Color(0xFF10B981),
+                  ),
+                );
+              },
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('إلغاء', style: GoogleFonts.cairo(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await ApiService.setBaseUrl(controller.text);
-              Navigator.pop(ctx);
-              _loadAllData();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('تم حفظ عنوان السيرفر وجارٍ إعادة التحميل...', style: GoogleFonts.cairo()),
-                  backgroundColor: const Color(0xFF10B981),
-                ),
-              );
-            },
-            child: Text('حفظ واتصال', style: GoogleFonts.cairo()),
-          ),
-        ],
       ),
     );
   }
@@ -408,6 +463,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // 2. قسم البرمجة والترويج (زيد إياد - مانشيت متحرك + إعلانات المنصات)
   // ---------------------------------------------------------------------------
   Widget _buildProgrammingSection() {
+    final completedDevices = _programmingServices.where((s) => s.status == 'completed' || s.type == 'completed_programming').toList();
+    final standardServices = _programmingServices.where((s) => s.status != 'completed' && s.type != 'completed_programming').toList();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 80),
       children: [
@@ -511,11 +569,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         const SizedBox(height: 20),
 
-        // 3. شبكة خدمات الترويج على منصات التواصل الاجتماعي
+        // 3. قسم الأجهزة التي تم اكتمالها في البرمجة
+        if (completedDevices.isNotEmpty) ...[
+          _buildCompletedHeader(
+            title: '📱 الأجهزة التي تم اكتمال برمجتها وجاهزة للاستلام:',
+            count: completedDevices.length,
+            badgeColor: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 10),
+          ...completedDevices.map((device) => _buildCompletedDeviceCard(device, isProgramming: true)),
+          const SizedBox(height: 22),
+        ],
+
+        // 4. شبكة خدمات الترويج على منصات التواصل الاجتماعي
         _buildSocialAdsSection(),
         const SizedBox(height: 22),
 
-        // 4. خدمات السوفتوير وتخطي الآيكلود والأجهزة المبرمجة
+        // 5. خدمات السوفتوير وتخطي الآيكلود والأجهزة المبرمجة
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -524,13 +594,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
             ),
             Text(
-              '${_programmingServices.length} خدمة',
+              '${standardServices.length} خدمة',
               style: GoogleFonts.cairo(fontSize: 12, color: const Color(0xFF38BDF8)),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        ..._programmingServices.map((service) => _buildServiceCard(service, isProgramming: true)),
+        ...standardServices.map((service) => _buildServiceCard(service, isProgramming: true)),
       ],
     );
   }
@@ -686,6 +756,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   // 3. قسم الصيانة (Maintenance Section)
   // ---------------------------------------------------------------------------
   Widget _buildMaintenanceSection() {
+    final completedDevices = _maintenanceServices.where((s) => s.status == 'completed' || s.type == 'completed_maintenance').toList();
+    final standardServices = _maintenanceServices.where((s) => s.status != 'completed' && s.type != 'completed_maintenance').toList();
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
       children: [
@@ -723,12 +796,25 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
         const SizedBox(height: 18),
+
+        // قسم الأجهزة المكتملة في الصيانة
+        if (completedDevices.isNotEmpty) ...[
+          _buildCompletedHeader(
+            title: '🔧 الأجهزة التي تم اكتمال صيانتها وجاهزة للاستلام:',
+            count: completedDevices.length,
+            badgeColor: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 10),
+          ...completedDevices.map((device) => _buildCompletedDeviceCard(device, isProgramming: false)),
+          const SizedBox(height: 22),
+        ],
+
         Text(
-          'خدمات الصيانة السريعة:',
+          'خدمات الصيانة السريعة وتصليح الأعطال:',
           style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
         ),
         const SizedBox(height: 10),
-        ..._maintenanceServices.map((service) => _buildServiceCard(service, isProgramming: false)),
+        ...standardServices.map((service) => _buildServiceCard(service, isProgramming: false)),
       ],
     );
   }
@@ -907,6 +993,172 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCompletedHeader({required String title, required int count, required Color badgeColor}) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              const Icon(Icons.check_circle, color: Color(0xFF10B981), size: 22),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  title,
+                  style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: badgeColor.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: badgeColor.withOpacity(0.4)),
+          ),
+          child: Text(
+            '$count جهاز جاهز',
+            style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold, color: badgeColor),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompletedDeviceCard(ServiceItem device, {required bool isProgramming}) {
+    final displayImg = (device.imageFullUrl != null && device.imageFullUrl!.isNotEmpty)
+        ? device.imageFullUrl!
+        : ((device.imageUrl != null && device.imageUrl!.isNotEmpty) ? device.imageUrl : null);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF10B981), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // شريط علوي أخضر مميز
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF065F46), Color(0xFF047857)],
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.task_alt, color: Color(0xFF34D399), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'تم الاكتمال بنجاح - جاهز للاستلام ✅',
+                      style: GoogleFonts.cairo(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black26,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    isProgramming ? 'سوفتوير' : 'صيانة',
+                    style: GoogleFonts.cairo(fontSize: 11, color: Colors.white70),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // صورة الجهاز إذا توفرت
+          if (displayImg != null)
+            Container(
+              width: double.infinity,
+              height: 180,
+              color: const Color(0xFF0F172A),
+              child: Image.network(
+                displayImg,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(Icons.phone_android, size: 48, color: Colors.white24),
+                ),
+                loadingBuilder: (ctx, child, progress) {
+                  if (progress == null) return child;
+                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                },
+              ),
+            ),
+
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  device.title,
+                  style: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  device.description,
+                  style: GoogleFonts.cairo(fontSize: 13, color: const Color(0xFFCBD5E1)),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    if (device.managerNote.isNotEmpty)
+                      Flexible(
+                        child: Text(
+                          device.managerNote,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFFFDE047),
+                          ),
+                        ),
+                      )
+                    else
+                      const SizedBox(),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF25D366),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      ),
+                      icon: const Icon(Icons.chat, size: 16),
+                      label: Text(
+                        'استفسار الاستلام',
+                        style: GoogleFonts.cairo(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        final phone = isProgramming ? '+9647722882273' : _settings.whatsappNumber;
+                        final msg = 'مرحباً، أود الاستفسار عن استلام جهازي المكتمل:\n'
+                            '📱 الجهاز: ${device.title}\n'
+                            '📝 التفاصيل: ${device.description}\n'
+                            'متى يمكنني الحضور للمحل واستلامه؟';
+                        ApiService.launchWhatsApp(phone: phone, message: msg);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -34,10 +34,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   XFile? _serviceImage;
   Uint8List? _serviceImageBytes;
 
+  // 3. حقول إعدادات الرواتب والمتجر
+  String _salaryStatus = 'نعم';
+  final _salaryNotesController = TextEditingController();
+  final _whatsappController = TextEditingController(text: '+9647722882273');
+  bool _isSavingSettings = false;
+
   final ImagePicker _picker = ImagePicker();
   bool _isSubmitting = false;
 
-  // 3. قوائم الإدارة
+  // 4. قوائم الإدارة
   List<Product> _allProducts = [];
   List<ServiceItem> _allServices = [];
   bool _isLoading = true;
@@ -45,7 +51,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _loadAll();
   }
 
@@ -58,6 +64,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     _serviceTitleController.dispose();
     _servicePriceController.dispose();
     _serviceDescController.dispose();
+    _salaryNotesController.dispose();
+    _whatsappController.dispose();
     super.dispose();
   }
 
@@ -65,10 +73,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     setState(() => _isLoading = true);
     final products = await ApiService.getProducts();
     final services = await ApiService.getServices();
+    final settings = await ApiService.getSettings();
     if (mounted) {
       setState(() {
         _allProducts = products;
         _allServices = services;
+        _salaryStatus = settings.salaryStatus.isNotEmpty ? settings.salaryStatus : 'نعم';
+        _salaryNotesController.text = settings.salaryNotes;
+        _whatsappController.text = settings.whatsappNumber;
         _isLoading = false;
       });
     }
@@ -153,19 +165,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     }
   }
 
-  // --- حفظ خدمة / جهاز مبرمج ---
+  // --- حفظ خدمة / جهاز مبرمج أو مكتمل ---
   Future<void> _submitService() async {
     if (!_serviceFormKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
+
+    String note = 'فني معتمد';
+    if (_selectedServiceType == 'programming') {
+      note = 'بإدارة: زيد إياد - +9647722882273';
+    } else if (_selectedServiceType == 'completed_programming') {
+      note = 'جاهز للاستلام - بإدارة زيد إياد';
+    } else if (_selectedServiceType == 'completed_maintenance') {
+      note = 'جاهز للتسليم في المحل';
+    }
 
     Map<String, dynamic> res;
     if (kIsWeb || _serviceImage == null) {
       res = await ApiService.addService(
         type: _selectedServiceType,
         title: _serviceTitleController.text.trim(),
-        price: _servicePriceController.text.trim(),
+        price: _servicePriceController.text.trim().isNotEmpty ? _servicePriceController.text.trim() : 'تم الإنجاز ✅',
         description: _serviceDescController.text.trim(),
-        managerNote: _selectedServiceType == 'programming' ? 'بإدارة: زيد إياد' : 'فني معتمد',
+        managerNote: note,
         imageBytes: _serviceImageBytes,
         imageName: _serviceImage?.name,
       );
@@ -173,9 +194,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       res = await ApiService.addService(
         type: _selectedServiceType,
         title: _serviceTitleController.text.trim(),
-        price: _servicePriceController.text.trim(),
+        price: _servicePriceController.text.trim().isNotEmpty ? _servicePriceController.text.trim() : 'تم الإنجاز ✅',
         description: _serviceDescController.text.trim(),
-        managerNote: _selectedServiceType == 'programming' ? 'بإدارة: زيد إياد' : 'فني معتمد',
+        managerNote: note,
         imageFile: File(_serviceImage!.path),
       );
     }
@@ -242,13 +263,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ],
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
           indicatorColor: const Color(0xFF0EA5E9),
           labelColor: const Color(0xFF0EA5E9),
           unselectedLabelColor: const Color(0xFF94A3B8),
           labelStyle: GoogleFonts.cairo(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: const [
             Tab(icon: Icon(Icons.add_shopping_cart), text: 'إضافة منتج'),
-            Tab(icon: Icon(Icons.developer_mode), text: 'إضافة خدمة/جهاز برمجة'),
+            Tab(icon: Icon(Icons.developer_mode), text: 'إضافة خدمة / جهاز مكتمل'),
+            Tab(icon: Icon(Icons.payments), text: 'الرواتب والإعدادات'),
             Tab(icon: Icon(Icons.inventory), text: 'إدارة المحتوى'),
           ],
         ),
@@ -258,6 +282,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         children: [
           _buildAddProductTab(),
           _buildAddServiceTab(),
+          _buildSalaryAndSettingsTab(),
           _buildManageTab(),
         ],
       ),
@@ -399,9 +424,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                       dropdownColor: const Color(0xFF161F30),
                       style: GoogleFonts.cairo(color: Colors.white, fontSize: 15),
                       items: const [
-                        DropdownMenuItem(value: 'programming', child: Text('💻 قسم البرمجة والسوفتوير والترويج (زيد إياد)')),
-                        DropdownMenuItem(value: 'maintenance', child: Text('🔧 قسم الصيانة وتصليح الأجهزة')),
-                        DropdownMenuItem(value: 'financial', child: Text('💳 قسم التحويلات والخدمات المالية (زين كاش، كي، آسيا)')),
+                        DropdownMenuItem(value: 'programming', child: Text('💻 خدمة برمجة وسوفتوير (زيد إياد)')),
+                        DropdownMenuItem(value: 'completed_programming', child: Text('📱 جهاز تم اكتمال برمجته وجاهز للاستلام ✅')),
+                        DropdownMenuItem(value: 'maintenance', child: Text('🔧 خدمة صيانة وتصليح أجهزة')),
+                        DropdownMenuItem(value: 'completed_maintenance', child: Text('📱 جهاز تم اكتمال صيانته وجاهز للاستلام ✅')),
+                        DropdownMenuItem(value: 'financial', child: Text('💳 خدمة مالية وتحويل كاش (زين كاش، كي، آسيا)')),
                       ],
                       onChanged: (val) {
                         if (val != null) setState(() => _selectedServiceType = val);
@@ -441,7 +468,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 ),
                 const SizedBox(height: 24),
                 _buildSubmitButton(
-                  title: 'نشر الخدمة والجهاز في قسم البرمجة',
+                  title: 'نشر الخدمة / الجهاز في التطبيق',
                   icon: Icons.cloud_upload,
                   color: const Color(0xFF0284C7),
                   onPressed: _submitService,
@@ -452,6 +479,114 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         ),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3. تبويب حالة الرواتب والإعدادات
+  // ---------------------------------------------------------------------------
+  Widget _buildSalaryAndSettingsTab() {
+    final isSalaryAvailable = _salaryStatus == 'نعم';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 550),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isSalaryAvailable ? const Color(0xFF10B981).withOpacity(0.15) : const Color(0xFFEF4444).withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: isSalaryAvailable ? const Color(0xFF10B981) : const Color(0xFFEF4444), width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.account_balance_wallet, color: isSalaryAvailable ? const Color(0xFF10B981) : const Color(0xFFEF4444), size: 28),
+                            const SizedBox(width: 10),
+                            Text('حالة توزيع الرواتب اليوم:', style: GoogleFonts.cairo(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                          ],
+                        ),
+                        Switch(
+                          value: isSalaryAvailable,
+                          activeColor: const Color(0xFF10B981),
+                          onChanged: (val) {
+                            setState(() => _salaryStatus = val ? 'نعم' : 'لا');
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isSalaryAvailable ? 'حالة الرواتب: متوفرة الآن للزبائن (نعم ✅)' : 'حالة الرواتب: غير متوفرة حالياً (لا ❌)',
+                      style: GoogleFonts.cairo(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: isSalaryAvailable ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('ملاحظات وتفاصيل الرواتب المعروضة:', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _salaryNotesController,
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration('مثال: توزيع رواتب المتقاعدين والرعاية الاجتماعية مستمر في المحل...', Icons.edit_note),
+              ),
+              const SizedBox(height: 20),
+              Text('رقم واتساب المتجر الرسمي:', style: GoogleFonts.cairo(fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _whatsappController,
+                style: const TextStyle(color: Colors.white),
+                decoration: _inputDecoration('رقم الواتساب الدولي (+9647722882273)', Icons.phone),
+              ),
+              const SizedBox(height: 24),
+              _buildSubmitButton(
+                title: _isSavingSettings ? 'جارٍ الحفظ بالسيرفر...' : 'حفظ ونشر التعديلات فوراً',
+                icon: Icons.save,
+                color: const Color(0xFF10B981),
+                onPressed: _saveSettings,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _saveSettings() async {
+    setState(() => _isSavingSettings = true);
+    final ok = await ApiService.updateSettings({
+      'salary_status': _salaryStatus,
+      'salary_notes': _salaryNotesController.text.trim(),
+      'whatsapp_number': _whatsappController.text.trim(),
+    });
+    if (!mounted) return;
+    setState(() => _isSavingSettings = false);
+
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تم تحديث حالة الرواتب والإعدادات بنجاح!', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFF10B981)),
+      );
+      _loadAll();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('حدث خطأ أثناء الاتصال بالسيرفر لحفظ الإعدادات', style: GoogleFonts.cairo()), backgroundColor: const Color(0xFFEF4444)),
+      );
+    }
   }
 
   // ---------------------------------------------------------------------------

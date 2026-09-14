@@ -53,10 +53,10 @@ class Product {
   }
 }
 
-/// 2. نموذج الخدمات (برمجة، صيانة، وأجهزة مبرمجة مع صور)
+/// 2. نموذج الخدمات (برمجة، صيانة، وأجهزة مكتملة مع صور)
 class ServiceItem {
   final int id;
-  final String type; // 'programming' أو 'maintenance'
+  final String type; // 'programming', 'maintenance', 'financial', 'completed_programming', 'completed_maintenance'
   final String title;
   final String description;
   final String price;
@@ -64,6 +64,7 @@ class ServiceItem {
   final String? imageUrl;
   final String? imageFullUrl;
   final String? createdAt;
+  final String status; // 'completed', 'in_progress', 'available'
 
   ServiceItem({
     required this.id,
@@ -75,12 +76,15 @@ class ServiceItem {
     this.imageUrl,
     this.imageFullUrl,
     this.createdAt,
+    this.status = 'available',
   });
 
   factory ServiceItem.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type']?.toString() ?? 'programming';
+    final isComp = typeStr.startsWith('completed') || json['status'] == 'completed';
     return ServiceItem(
       id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      type: json['type'] ?? 'programming',
+      type: typeStr,
       title: json['title'] ?? '',
       description: json['description'] ?? '',
       price: json['price'] ?? '',
@@ -88,7 +92,21 @@ class ServiceItem {
       imageUrl: json['image_url'],
       imageFullUrl: json['image_full_url'],
       createdAt: json['created_at'],
+      status: json['status'] ?? (isComp ? 'completed' : 'available'),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type,
+      'title': title,
+      'description': description,
+      'price': price,
+      'manager_note': managerNote,
+      'image_url': imageUrl,
+      'status': status,
+    };
   }
 }
 
@@ -270,6 +288,26 @@ class DefaultAppData {
       managerNote: 'بإدارة: زيد إياد - +9647722882273',
       imageUrl: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=600&auto=format&fit=crop',
     ),
+    ServiceItem(
+      id: 205,
+      type: 'completed_programming',
+      title: 'iPhone 14 Pro Max (تم تخطي آيكلود وتفعيل 5G)',
+      description: 'تم الانتهاء بنجاح من تخطي حساب آيكلود، فك قفل الشبكة الدولية، وتثبيت التحديث الرسمي مع ضمان.',
+      price: 'تم الإنجاز ✅',
+      managerNote: 'جاهز للاستلام - بإدارة زيد إياد',
+      status: 'completed',
+      imageUrl: 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=600&auto=format&fit=crop',
+    ),
+    ServiceItem(
+      id: 206,
+      type: 'completed_programming',
+      title: 'Samsung Galaxy S23 Ultra (إصلاح نظام وروم وكالة)',
+      description: 'تم حل مشكلة التعليق على الشعار واستعادة البيانات وتحديث الجهاز بنجاح وفحص الشبكة.',
+      price: 'تم الإنجاز ✅',
+      managerNote: 'جاهز للاستلام - بإدارة زيد إياد',
+      status: 'completed',
+      imageUrl: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=600&auto=format&fit=crop',
+    ),
   ];
 
   static List<ServiceItem> get defaultMaintenance => [
@@ -296,6 +334,26 @@ class DefaultAppData {
       description: 'صيانة احترافية بالمايكروسكوب لأعطال الشحن، الإشارة، الباور، والتعرض للماء مع قطع غيار أصلية',
       price: 'حسب الفحص',
       imageUrl: 'https://images.unsplash.com/photo-1597740985671-2a8a3b80502e?w=600&auto=format&fit=crop',
+    ),
+    ServiceItem(
+      id: 304,
+      type: 'completed_maintenance',
+      title: 'iPhone 13 Pro (تم استبدال شاشة أصلية وبطارية)',
+      description: 'تم فحص اللمس ونقل التروتون بنجاح مع بطارية وكالة وضمان 6 أشهر.',
+      price: 'تم الإنجاز ✅',
+      managerNote: 'جاهز للتسليم للزبون',
+      status: 'completed',
+      imageUrl: 'https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=600&auto=format&fit=crop',
+    ),
+    ServiceItem(
+      id: 305,
+      type: 'completed_maintenance',
+      title: 'Redmi Note 12 (تم تصليح آيسي الباور وقاعدة الشحن)',
+      description: 'تم إصلاح مشكلة انطفاء الهاتف وتغيير فلاتة الشحن الأصلية بنجاح.',
+      price: 'تم الإنجاز ✅',
+      managerNote: 'جاهز للتسليم للزبون',
+      status: 'completed',
+      imageUrl: 'https://images.unsplash.com/photo-1580910051074-3eb694886505?w=600&auto=format&fit=crop',
     ),
   ];
 
