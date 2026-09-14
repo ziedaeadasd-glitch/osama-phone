@@ -38,6 +38,9 @@ jobs:
       - name: 🔧 ضبط صلاحيات Gradle
         run: chmod +x android/gradlew
 
+      - name: ⚙️ إعداد local.properties
+        run: echo "flutter.sdk=$FLUTTER_ROOT" > android/local.properties
+
       - name: 🔨 بناء ملف APK (Release)
         run: flutter build apk --release
 
