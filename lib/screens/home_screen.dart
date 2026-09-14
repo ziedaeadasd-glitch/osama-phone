@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/app_models.dart';
 import '../services/api_service.dart';
+import '../widgets/adaptive_image.dart';
 import 'admin_login_screen.dart';
 import 'admin_dashboard.dart';
 
@@ -345,17 +346,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 child: Container(
                   width: double.infinity,
                   color: const Color(0xFF0F172A),
-                  child: displayImg != null
-                      ? Image.network(
-                          displayImg,
-                          fit: BoxFit.cover,
-                          errorBuilder: (ctx, err, stack) => _buildImagePlaceholder(),
-                          loadingBuilder: (ctx, child, progress) {
-                            if (progress == null) return child;
-                            return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-                          },
-                        )
-                      : _buildImagePlaceholder(),
+                  child: AdaptiveImageWidget(
+                    imageUrl: displayImg,
+                    placeholder: _buildImagePlaceholder(),
+                  ),
                 ),
               ),
               // تفاصيل المنتج
@@ -1089,16 +1083,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               width: double.infinity,
               height: 180,
               color: const Color(0xFF0F172A),
-              child: Image.network(
-                displayImg,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Center(
+              child: AdaptiveImageWidget(
+                imageUrl: displayImg,
+                placeholder: const Center(
                   child: Icon(Icons.phone_android, size: 48, color: Colors.white24),
                 ),
-                loadingBuilder: (ctx, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-                },
               ),
             ),
 
@@ -1183,16 +1172,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               width: double.infinity,
               height: 190,
               color: const Color(0xFF0F172A),
-              child: Image.network(
-                displayImg,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const Center(
+              child: AdaptiveImageWidget(
+                imageUrl: displayImg,
+                placeholder: const Center(
                   child: Icon(Icons.phone_iphone, size: 50, color: Colors.white24),
                 ),
-                loadingBuilder: (ctx, child, progress) {
-                  if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-                },
               ),
             ),
           Padding(
